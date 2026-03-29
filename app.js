@@ -9,6 +9,7 @@ const resultsSection = document.getElementById('resultsSection');
 const resultsList = document.getElementById('resultsList');
 const imageCountSpan = document.getElementById('imageCount');
 const downloadAllBtn = document.getElementById('downloadAll');
+const testFileBtn = document.getElementById('testFileBtn');
 const progressBar = document.getElementById('progressBar');
 const progressFill = document.getElementById('progressFill');
 
@@ -37,6 +38,21 @@ dropzone.addEventListener('drop', (e) => {
 pdfInput.addEventListener('change', (e) => {
     if (e.target.files.length > 0) {
         handleFiles(Array.from(e.target.files));
+    }
+});
+
+// Load test.pdf for quick testing
+testFileBtn.addEventListener('click', async (e) => {
+    e.stopPropagation(); // Avoid triggering dropzone click
+    try {
+        const response = await fetch('test.pdf');
+        if (!response.ok) throw new Error('Could not find test.pdf');
+        const blob = await response.blob();
+        const file = new File([blob], 'test.pdf', { type: 'application/pdf' });
+        handleFiles([file]);
+    } catch (err) {
+        console.error(err);
+        alert('Test file not found. Please ensure test.pdf is in the app directory.');
     }
 });
 
