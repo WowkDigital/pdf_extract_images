@@ -4,9 +4,7 @@ A fast, secure, and entirely client-side web application to extract images and t
 
 ## 🚀 Live Demo
 
-[![Live Demo](https://wowkdigital.github.io/pdf_extract_images/)](https://wowkdigital.github.io/pdf_extract_images/)
-
-![Screenshot Placeholder](https://via.placeholder.com/800x450.png?text=PDF+Extractor+UI+Preview)
+[Live Demo](https://wowkdigital.github.io/pdf_extract_images/)
 
 ## ✨ Features
 
