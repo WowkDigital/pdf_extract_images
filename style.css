@@ -205,6 +205,57 @@ body {
     -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='currentColor'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' /%3E%3C/svg%3E") no-repeat center;
 }
 
+.file-content-container {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.sub-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.sub-title {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-sub);
+    margin-bottom: 0px;
+    font-weight: 600;
+}
+
+.text-preview-box {
+    width: 100%;
+    max-height: 300px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 20px;
+    font-family: 'monospace', sans-serif;
+    font-size: 0.9rem;
+    color: #cbd5e1;
+    overflow-y: auto;
+    white-space: pre-wrap; /* Kluczowe do zachowania nowych linii */
+    line-height: 1.5;
+}
+
+.text-preview-box::-webkit-scrollbar {
+    width: 8px;
+}
+
+.text-preview-box::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 10px;
+}
+
+.images-extraction-container {
+    border-top: 1px solid var(--border);
+    padding-top: 30px;
+}
+
 .images-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -269,6 +320,17 @@ body {
     color: white;
 }
 
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-main);
+    border: 1px solid var(--border);
+}
+
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: var(--primary);
+}
+
 .btn-primary:hover {
     opacity: 0.9;
     transform: translateY(-2px);
@@ -277,6 +339,17 @@ body {
 .btn-small {
     padding: 6px 10px;
     font-size: 0.75rem;
+}
+
+.btn-tiny {
+    padding: 4px 10px;
+    font-size: 0.65rem;
+    font-weight: 400;
+}
+
+.btn.success {
+    background: #10b981;
+    border-color: #059669;
 }
 
 .hidden {

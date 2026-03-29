@@ -73,15 +73,24 @@ async function handleFiles(files) {
             for (let i = 1; i <= totalPages; i++) {
                 const page = await pdf.getPage(i);
                 
-                // --- Ekstrakcja tekstu ---
+                // --- Ekstrakcja tekstu z prostym zachowaniem linii ---
                 const textContent = await page.getTextContent();
-                const pageText = textContent.items.map(item => item.str).join(" ");
+                let lastY;
+                let pageText = "";
+                
+                for (const item of textContent.items) {
+                    if (lastY !== undefined && Math.abs(item.transform[5] - lastY) > 5) {
+                        pageText += "\n";
+                    }
+                    pageText += item.str;
+                    lastY = item.transform[5];
+                }
+                
                 fullText += `--- Strona ${i} ---\n${pageText}\n\n`;
 
                 // --- Ekstrakcja obrazów ---
                 const opList = await page.getOperatorList();
                 
-                // Progres (uproszczony dla wielu plików)
                 const overallPercent = ((fileIndex + (i / totalPages)) / pdfFiles.length) * 100;
                 progressFill.style.width = `${overallPercent}%`;
 
@@ -103,8 +112,7 @@ async function handleFiles(files) {
                             const dataUrl = await imageToDataUrl(imgSource);
                             if (dataUrl) {
                                 const imgNum = fileImages.length + 1;
-                                // Uproszczona nazwa bez spacji i długich ciągów
-                                const imgName = `img_${imgNum}.jpg`;
+                                const imgName = `${safeBaseName}_${imgNum}.jpg`;
                                 
                                 fileImages.push({
                                     name: imgName,
@@ -126,20 +134,49 @@ async function handleFiles(files) {
             });
 
             // Dodaj sekcję dla tego pliku
-            if (fileImages.length > 0) {
+            if (fileImages.length > 0 || fullText.trim()) {
                 const fileSection = document.createElement('div');
                 fileSection.className = 'file-result-section';
                 fileSection.innerHTML = `
                     <h3 class="file-section-title">${file.name}</h3>
-                    <div class="images-grid"></div>
+                    <div class="file-content-container">
+                        <div class="text-extraction-container ${fullText.trim() ? '' : 'hidden'}">
+                            <div class="sub-header-row">
+                                <h4 class="sub-title">Wyodrębniony tekst:</h4>
+                                <button class="btn btn-secondary btn-tiny copy-btn">Kopiuj tekst</button>
+                            </div>
+                            <div class="text-preview-box">${fullText.trim()}</div>
+                        </div>
+                        <div class="images-extraction-container ${fileImages.length > 0 ? '' : 'hidden'}">
+                            <h4 class="sub-title">Zdjęcia:</h4>
+                            <div class="images-grid"></div>
+                        </div>
+                    </div>
                 `;
                 resultsList.appendChild(fileSection);
                 
-                const grid = fileSection.querySelector('.images-grid');
-                fileImages.forEach(img => {
-                    const imgCard = createImageCard(img.url, img.name);
-                    grid.appendChild(imgCard);
-                });
+                // Obsługa kopiowania
+                const copyBtn = fileSection.querySelector('.copy-btn');
+                if (copyBtn) {
+                    copyBtn.addEventListener('click', () => {
+                        navigator.clipboard.writeText(fullText.trim()).then(() => {
+                            copyBtn.textContent = 'Skopiowano!';
+                            copyBtn.classList.add('success');
+                            setTimeout(() => {
+                                copyBtn.textContent = 'Kopiuj tekst';
+                                copyBtn.classList.remove('success');
+                            }, 2000);
+                        });
+                    });
+                }
+
+                if (fileImages.length > 0) {
+                    const grid = fileSection.querySelector('.images-grid');
+                    fileImages.forEach(img => {
+                        const imgCard = createImageCard(img.url, img.name);
+                        grid.appendChild(imgCard);
+                    });
+                }
             }
         }
 
@@ -237,20 +274,22 @@ downloadAllBtn.addEventListener('click', async () => {
 
     try {
         const zip = new JSZip();
+        const now = new Date();
         
         for (const fileData of processedFiles) {
             // Używamy bezpiecznej nazwy folderu
             const folder = zip.folder(fileData.safeName);
             
-            // Dodaj obrazy do folderu
-            for (const img of fileData.images) {
+            // Dodaj obrazy - płasko, z neutralnymi nazwami
+            for (let idx = 0; idx < fileData.images.length; idx++) {
+                const img = fileData.images[idx];
                 const base64Data = img.url.split(',')[1];
-                folder.file(img.name, base64Data, { base64: true });
+                folder.file(img.name, base64Data, { base64: true, date: now });
             }
 
             // Dodaj wyeksportowany tekst
             if (fileData.text) {
-                folder.file(`${fileData.safeName}_tekst.txt`, fileData.text);
+                folder.file(`${fileData.safeName}_text.txt`, fileData.text, { date: now });
             }
         }
 
