@@ -2,6 +2,10 @@
 
 A fast, secure, and entirely client-side web application to extract images and text from PDF files. No server upload required – all processing happens locally in your browser.
 
+## 🚀 Live Demo
+
+[![Live Demo](https://wowkdigital.github.io/pdf_extract_images/)](https://wowkdigital.github.io/pdf_extract_images/)
+
 ![Screenshot Placeholder](https://via.placeholder.com/800x450.png?text=PDF+Extractor+UI+Preview)
 
 ## ✨ Features
