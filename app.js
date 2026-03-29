@@ -1,8 +1,8 @@
-// Konfiguracja PDF.js
+// PDF.js configuration
 const pdfjsLib = window['pdfjs-dist/build/pdf'];
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-// Elementy DOM
+// DOM Elements
 const dropzone = document.getElementById('dropzone');
 const pdfInput = document.getElementById('pdfInput');
 const resultsSection = document.getElementById('resultsSection');
@@ -12,9 +12,9 @@ const downloadAllBtn = document.getElementById('downloadAll');
 const progressBar = document.getElementById('progressBar');
 const progressFill = document.getElementById('progressFill');
 
-let processedFiles = []; // Przechowuje wyniki dla wszystkich przetworzonych plików
+let processedFiles = []; // All extracted data storage
 
-// Obsługa interakcji z uploadem
+// Interaction Event Listeners
 dropzone.addEventListener('click', () => pdfInput.click());
 
 dropzone.addEventListener('dragover', (e) => {
@@ -40,14 +40,17 @@ pdfInput.addEventListener('change', (e) => {
     }
 });
 
+/**
+ * Handle multiple PDF files
+ */
 async function handleFiles(files) {
     const pdfFiles = files.filter(f => f.type === 'application/pdf');
     if (pdfFiles.length === 0) {
-        alert('Podaj poprawne pliki PDF.');
+        alert('Please provide valid PDF files.');
         return;
     }
 
-    // Reset stanu lub dopisanie
+    // Reset state for new upload
     processedFiles = [];
     resultsList.innerHTML = '';
     resultsSection.classList.add('hidden');
@@ -59,9 +62,9 @@ async function handleFiles(files) {
 
         for (let fileIndex = 0; fileIndex < pdfFiles.length; fileIndex++) {
             const file = pdfFiles[fileIndex];
-            const baseFileName = file.name.replace(/\.[^/.]+$/, ""); // Nazwa bez rozszerzenia
+            const baseFileName = file.name.replace(/\.[^/.]+$/, ""); // Name without extension
             const safeBaseName = sanitizeFileName(baseFileName);
-
+            
             const arrayBuffer = await file.arrayBuffer();
             const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
             
@@ -73,7 +76,7 @@ async function handleFiles(files) {
             for (let i = 1; i <= totalPages; i++) {
                 const page = await pdf.getPage(i);
                 
-                // --- Ekstrakcja tekstu z prostym zachowaniem linii ---
+                // --- Text Extraction ---
                 const textContent = await page.getTextContent();
                 let lastY;
                 let pageText = "";
@@ -85,10 +88,9 @@ async function handleFiles(files) {
                     pageText += item.str;
                     lastY = item.transform[5];
                 }
-                
-                fullText += `--- Strona ${i} ---\n${pageText}\n\n`;
+                fullText += `--- Page ${i} ---\n${pageText}\n\n`;
 
-                // --- Ekstrakcja obrazów ---
+                // --- Image Extraction ---
                 const opList = await page.getOperatorList();
                 
                 const overallPercent = ((fileIndex + (i / totalPages)) / pdfFiles.length) * 100;
@@ -109,14 +111,14 @@ async function handleFiles(files) {
                         }
 
                         if (imgSource && (imgSource.data || imgSource.bitmap)) {
-                            const dataUrl = await imageToDataUrl(imgSource);
-                            if (dataUrl) {
+                            const blob = await imageToBlob(imgSource);
+                            if (blob) {
                                 const imgNum = fileImages.length + 1;
                                 const imgName = `${safeBaseName}_${imgNum}.jpg`;
                                 
                                 fileImages.push({
                                     name: imgName,
-                                    url: dataUrl
+                                    blob: blob
                                 });
                                 totalProcessedImages++;
                             }
@@ -133,7 +135,7 @@ async function handleFiles(files) {
                 text: fullText
             });
 
-            // Dodaj sekcję dla tego pliku
+            // Re-render UI section for this file
             if (fileImages.length > 0 || fullText.trim()) {
                 const fileSection = document.createElement('div');
                 fileSection.className = 'file-result-section';
@@ -142,28 +144,28 @@ async function handleFiles(files) {
                     <div class="file-content-container">
                         <div class="text-extraction-container ${fullText.trim() ? '' : 'hidden'}">
                             <div class="sub-header-row">
-                                <h4 class="sub-title">Wyodrębniony tekst:</h4>
-                                <button class="btn btn-secondary btn-tiny copy-btn">Kopiuj tekst</button>
+                                <h4 class="sub-title">Extracted Text:</h4>
+                                <button class="btn btn-secondary btn-tiny copy-btn">Copy Text</button>
                             </div>
                             <div class="text-preview-box">${fullText.trim()}</div>
                         </div>
                         <div class="images-extraction-container ${fileImages.length > 0 ? '' : 'hidden'}">
-                            <h4 class="sub-title">Zdjęcia:</h4>
+                            <h4 class="sub-title">Images:</h4>
                             <div class="images-grid"></div>
                         </div>
                     </div>
                 `;
                 resultsList.appendChild(fileSection);
                 
-                // Obsługa kopiowania
+                // Copy logic
                 const copyBtn = fileSection.querySelector('.copy-btn');
                 if (copyBtn) {
                     copyBtn.addEventListener('click', () => {
                         navigator.clipboard.writeText(fullText.trim()).then(() => {
-                            copyBtn.textContent = 'Skopiowano!';
+                            copyBtn.textContent = 'Copied!';
                             copyBtn.classList.add('success');
                             setTimeout(() => {
-                                copyBtn.textContent = 'Kopiuj tekst';
+                                copyBtn.textContent = 'Copy Text';
                                 copyBtn.classList.remove('success');
                             }, 2000);
                         });
@@ -173,7 +175,7 @@ async function handleFiles(files) {
                 if (fileImages.length > 0) {
                     const grid = fileSection.querySelector('.images-grid');
                     fileImages.forEach(img => {
-                        const imgCard = createImageCard(img.url, img.name);
+                        const imgCard = createImageCard(img.blob, img.name);
                         grid.appendChild(imgCard);
                     });
                 }
@@ -185,18 +187,21 @@ async function handleFiles(files) {
             imageCountSpan.textContent = totalProcessedImages;
             resultsSection.scrollIntoView({ behavior: 'smooth' });
         } else {
-            alert('Nie znaleziono grafik ani tekstu w przesłanych plikach.');
+            alert('No graphics or text found in the provided files.');
         }
 
     } catch (error) {
-        console.error('Błąd podczas przetwarzania PDF:', error);
-        alert('Wystąpił błąd podczas analizy plików PDF.');
+        console.error('Error processing PDF:', error);
+        alert('An error occurred while analyzing the PDF files.');
     } finally {
         setTimeout(() => progressBar.classList.remove('active'), 1000);
     }
 }
 
-async function imageToDataUrl(img) {
+/**
+ * Convert PDF image source to JPEG Blob
+ */
+async function imageToBlob(img) {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     
@@ -234,42 +239,63 @@ async function imageToDataUrl(img) {
         ctx.putImageData(imageData, 0, 0);
     }
 
-    return canvas.toDataURL('image/jpeg', 0.85); // Zmiana na JPEG dla lepszej kompatybilności systemowej
+    return new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.85));
 }
 
-function createImageCard(url, imgName) {
+/**
+ * Handle single file download correctly
+ */
+function downloadFile(blob, fileName) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+/**
+ * Create image card with download button
+ */
+function createImageCard(blob, imgName) {
+    const url = URL.createObjectURL(blob);
     const div = document.createElement('div');
     div.className = 'image-card';
     div.innerHTML = `
         <img src="${url}" alt="${imgName}">
         <div class="image-info">
-            <div>
-                <span class="image-name">${imgName}</span>
-            </div>
-            <a href="${url}" download="${imgName}" class="btn btn-primary btn-small">Pobierz</a>
+            <span class="image-name" title="${imgName}">${imgName}</span>
+            <button class="btn btn-primary btn-small download-btn">Download</button>
         </div>
     `;
+    
+    // Explicit download listener to ensure filename
+    div.querySelector('.download-btn').addEventListener('click', () => {
+        downloadFile(blob, imgName);
+    });
+
     return div;
 }
 
+/**
+ * Clean filename for file systems
+ */
 function sanitizeFileName(name) {
-    // Mapowanie polskich znaków
     const polishChars = {'ą':'a','ć':'c','ę':'e','ł':'l','ń':'n','ó':'o','ś':'s','ź':'z','ż':'z','Ą':'A','Ć':'C','Ę':'E','Ł':'L','Ń':'N','Ó':'O','Ś':'S','Ź':'Z','Ż':'Z'};
-    
     let sanitized = name.split('').map(char => polishChars[char] || char).join('');
-    
-    // Usuń znaki niebezpieczne dla systemów plików i potencjalnie groźne dla Windows Defender
-    // Zamień spacje na podkreślenia, usuń kropki (z wyjątkiem rozszerzenia, ale tu operujemy na baseName)
     sanitized = sanitized.replace(/[^a-z0-9]/gi, '_').replace(/_+/g, '_');
-    
-    // Usuń podkreślenia z początku i końca
     return sanitized.replace(/^_+|_+$/g, '');
 }
 
+/**
+ * Generate ZIP and trigger browser download
+ */
 downloadAllBtn.addEventListener('click', async () => {
     if (processedFiles.length === 0) return;
 
-    downloadAllBtn.textContent = 'Kompresowanie...';
+    downloadAllBtn.textContent = 'Compressing...';
     downloadAllBtn.disabled = true;
 
     try {
@@ -277,17 +303,14 @@ downloadAllBtn.addEventListener('click', async () => {
         const now = new Date();
         
         for (const fileData of processedFiles) {
-            // Używamy bezpiecznej nazwy folderu
             const folder = zip.folder(fileData.safeName);
             
-            // Dodaj obrazy - płasko, z neutralnymi nazwami
-            for (let idx = 0; idx < fileData.images.length; idx++) {
-                const img = fileData.images[idx];
-                const base64Data = img.url.split(',')[1];
-                folder.file(img.name, base64Data, { base64: true, date: now });
+            for (const img of fileData.images) {
+                // To avoid base64 overhead in JSZip loop, convert blob back or use directly if using latest jszip
+                const arrayBuffer = await img.blob.arrayBuffer();
+                folder.file(img.name, arrayBuffer, { date: now });
             }
 
-            // Dodaj wyeksportowany tekst
             if (fileData.text) {
                 folder.file(`${fileData.safeName}_text.txt`, fileData.text, { date: now });
             }
@@ -295,23 +318,17 @@ downloadAllBtn.addEventListener('click', async () => {
 
         const content = await zip.generateAsync({ 
             type: 'blob',
+            mimeType: 'application/zip',
             compression: 'DEFLATE',
             compressionOptions: { level: 6 }
         });
-        const downloadUrl = URL.createObjectURL(content);
         
-        const a = document.createElement('a');
-        a.href = downloadUrl;
-        a.download = 'pdf_results.zip';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(downloadUrl);
+        downloadFile(content, 'pdf_results.zip');
     } catch (e) {
         console.error(e);
-        alert('Błąd podczas tworzenia archiwum ZIP.');
+        alert('Error creating ZIP archive.');
     } finally {
-        downloadAllBtn.textContent = 'Pobierz wszystkie (ZIP)';
+        downloadAllBtn.textContent = 'Download All (ZIP)';
         downloadAllBtn.disabled = false;
     }
 });

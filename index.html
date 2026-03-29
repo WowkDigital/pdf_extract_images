@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF Image Extractor – Wyodrębnij obrazy z plików PDF</title>
-    <meta name="description" content="Szybka i bezpłatna aplikacja do wyodrębniania obrazów z plików PDF bezpośrednio w przeglądarce.">
+    <title>PDF Image Extractor – Extract images and text from PDF</title>
+    <meta name="description" content="Fast and free application to extract images and text from PDF files directly in your browser.">
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,7 +15,7 @@
     <main class="app-container">
         <header class="hero-section">
             <h1 class="title">PDF Image <span class="gradient-text">Extractor</span></h1>
-            <p class="subtitle">Prześlij plik PDF i natychmiast wyodrębnij z niego wszystkie ukryte obrazy. Bezpiecznie, lokalnie i błyskawicznie.</p>
+            <p class="subtitle">Upload PDF files and instantly extract all hidden images and text. Secure, local, and lightning fast.</p>
         </header>
 
         <section class="upload-container" id="dropzone">
@@ -27,8 +27,8 @@
                     </svg>
                 </div>
                 <div class="text-group">
-                    <span class="main-text">Przeciągnij i upuść plik PDF</span>
-                    <span class="sub-text">Lub kliknij tutaj, aby wybrać plik z dysku</span>
+                    <span class="main-text">Drag & drop PDF files here</span>
+                    <span class="sub-text">Or click to browse your computer</span>
                 </div>
             </div>
             <div class="progress-bar" id="progressBar">
@@ -38,20 +38,20 @@
 
         <section class="results-container hidden" id="resultsSection">
             <div class="results-header">
-                <h2>Znalezione obrazy (<span id="imageCount">0</span>)</h2>
-                <button class="btn btn-primary" id="downloadAll">Pobierz wszystkie (ZIP)</button>
+                <h2>Extracted Content (<span id="imageCount">0</span> images)</h2>
+                <button class="btn btn-primary" id="downloadAll">Download All (ZIP)</button>
             </div>
             <div id="resultsList">
-                <!-- Dokumenty będą tu dodawane dynamicznie jako sekcje -->
+                <!-- Documents will be added dynamically here -->
             </div>
         </section>
 
         <footer class="footer">
-            <p>&copy; 2026 PDF Image Extractor. Wszystkie pliki są przetwarzane lokalnie w Twojej przeglądarce.</p>
+            <p>&copy; 2026 PDF Image Extractor. All files are processed locally in your browser.</p>
         </footer>
     </main>
 
-    <!-- JSZip do kompresji wielu plików -->
+    <!-- JSZip for compression -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script src="app.js"></script>
